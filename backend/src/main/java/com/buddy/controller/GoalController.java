@@ -187,6 +187,7 @@ public class GoalController {
             
             goalRepository.delete(goal);
             
+            
             return ResponseEntity.ok(Map.of("message", "Goal deleted successfully!"));
             
         } catch (Exception e) {
