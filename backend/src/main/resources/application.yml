@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: buddy-backend
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/buddy_db
+    username: ${DB_USERNAME:buddy_user}
+    password: ${DB_PASSWORD:buddy_password}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  security:
+    cors:
+      allowed-origins: 
+        - "http://localhost:3000"
+        - "http://localhost:8081"
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowed-headers: "*"
+      allow-credentials: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKey}
+  expiration: 86400000 # 24 hours
+
+# Firebase Configuration
+firebase:
+  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:firebase-service-account.json}
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Logging
+logging:
+  level:
+    com.buddy: DEBUG
+    org.springframework.security: DEBUG
+    com.google.firebase: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always 
