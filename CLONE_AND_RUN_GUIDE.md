@@ -5,7 +5,7 @@
 ### **Required Software:**
 1. **Git** - Download: https://git-scm.com/download/windows
 2. **Java 17+** - Download: https://adoptium.net/
-3. **Maven** - Download: https://maven.apache.org/download.cgi
+3. **Maven** - Download: https://maven.apache.org/download.cgi (or use wrapper - see below)
 4. **Node.js 18+** - Download: https://nodejs.org/
 5. **PostgreSQL** - Download: https://www.postgresql.org/download/
 6. **Android Studio** - Download: https://developer.android.com/studio (for Android)
@@ -15,7 +15,7 @@
 ```bash
 git --version
 java --version
-mvn --version
+mvn --version  # or use Maven wrapper commands below
 node --version
 npm --version
 ```
@@ -105,9 +105,24 @@ GRANT ALL PRIVILEGES ON DATABASE buddy_db TO buddy_user;
 cd backend
 ```
 
-### **3.2 Install Dependencies**
-**Note:** This project doesn't include Maven wrapper files, so we'll use Maven directly.
+### **3.2 Make Maven Wrapper Executable (Linux/macOS)**
+```bash
+chmod +x mvnw
+```
 
+### **3.3 Install Dependencies**
+Choose one of the following options:
+
+#### **Option A: Using Maven Wrapper (Recommended)**
+```bash
+# Windows
+.\mvnw.cmd dependency:resolve
+
+# Linux/macOS  
+./mvnw dependency:resolve
+```
+
+#### **Option B: Using Direct Maven (if installed)**
 ```bash
 # Make sure Maven is installed
 mvn --version
@@ -116,18 +131,22 @@ mvn --version
 mvn dependency:resolve
 ```
 
-### **3.3 Run Spring Boot Application**
+### **3.4 Run Spring Boot Application**
+Choose the same option you used above:
+
+#### **Option A: Using Maven Wrapper**
+```bash
+# Windows
+.\mvnw.cmd spring-boot:run
+
+# Linux/macOS
+./mvnw spring-boot:run
+```
+
+#### **Option B: Using Direct Maven**
 ```bash
 # Run the application
 mvn spring-boot:run
-```
-
-**Alternative if Maven is not installed:**
-```bash
-# Install Maven using Chocolatey (Windows)
-choco install maven
-
-# Or download manually from: https://maven.apache.org/download.cgi
 ```
 
 ### **3.5 Verify Backend is Running**
@@ -286,7 +305,8 @@ docker-compose up postgres -d
 
 # 3. Start backend (new terminal)
 cd backend
-mvn spring-boot:run
+./mvnw spring-boot:run  # or .\mvnw.cmd spring-boot:run on Windows
+# Alternative: mvn spring-boot:run (if Maven is installed directly)
 
 # 4. Start mobile app (new terminal)
 cd mobile
