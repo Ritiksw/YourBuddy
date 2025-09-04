@@ -10,6 +10,10 @@ buildscript {
         kotlinVersion = "1.8.0"               // Compatible with RN 0.74.1
     }
     repositories {
+        // React Native repositories MUST come first for plugin resolution
+        maven {
+            url("$rootDir/../node_modules/react-native/android")
+        }
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -25,10 +29,7 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        mavenCentral()
-        maven { url "https://www.jitpack.io" }
-        // React Native 0.74.1 specific repositories
+        // React Native repositories MUST come first
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../node_modules/react-native/android")
@@ -37,6 +38,9 @@ allprojects {
             // Android JSC is installed from npm
             url("$rootDir/../node_modules/jsc-android/dist")
         }
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
         mavenCentral {
             // We don't want to fetch react-native from Maven Central as there are
             // older versions over there.
