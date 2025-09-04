@@ -1,7 +1,9 @@
 package com.buddy.controller;
 
 import com.buddy.model.BuddyRelationship;
+import com.buddy.model.Goal;
 import com.buddy.model.User;
+import com.buddy.repository.BuddyRelationshipRepository;
 import com.buddy.repository.UserRepository;
 import com.buddy.service.BuddyMatchingService;
 import com.buddy.service.FirebaseMessagingService;
@@ -24,6 +26,9 @@ public class BuddyController {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private BuddyRelationshipRepository buddyRelationshipRepository;
     
     @Autowired
     private FirebaseMessagingService firebaseMessagingService;
@@ -209,8 +214,8 @@ public class BuddyController {
                         );
                     })
                     .sorted((a, b) -> Integer.compare(
-                            (Integer) b.get("compatibilityScore"), 
-                            (Integer) a.get("compatibilityScore")))
+                            ((Integer) b.get("compatibilityScore")), 
+                            ((Integer) a.get("compatibilityScore"))))
                     .limit(10) // Top 10 recommendations
                     .toList();
             

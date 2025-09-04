@@ -1,6 +1,7 @@
 package com.buddy.service;
 
 import com.buddy.model.BuddyRelationship;
+import com.buddy.model.CheckIn;
 import com.buddy.model.Goal;
 import com.buddy.model.User;
 import com.buddy.repository.BuddyRelationshipRepository;
