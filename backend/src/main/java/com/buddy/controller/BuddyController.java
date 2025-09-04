@@ -30,7 +30,7 @@ public class BuddyController {
     @Autowired
     private BuddyRelationshipRepository buddyRelationshipRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private FirebaseMessagingService firebaseMessagingService;
     
     @PostMapping("/request/{goalId}")

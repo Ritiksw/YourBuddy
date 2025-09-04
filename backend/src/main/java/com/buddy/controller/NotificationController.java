@@ -18,7 +18,7 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class NotificationController {
     
-    @Autowired
+    @Autowired(required = false)
     private FirebaseMessagingService firebaseMessagingService;
     
     @Autowired
@@ -77,6 +77,13 @@ public class NotificationController {
     public ResponseEntity<?> sendNotification(@RequestBody Map<String, Object> request,
                                             Authentication authentication) {
         try {
+            if (firebaseMessagingService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Push notifications require Firebase setup",
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             String title = (String) request.get("title");
             String body = (String) request.get("body");
             String targetUsername = (String) request.get("targetUsername");
@@ -116,6 +123,13 @@ public class NotificationController {
     public ResponseEntity<?> subscribeToTopic(@RequestBody Map<String, String> request,
                                             Authentication authentication) {
         try {
+            if (firebaseMessagingService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Topic subscription requires Firebase setup",
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             String topic = request.get("topic");
             
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
