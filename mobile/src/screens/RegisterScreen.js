@@ -1,275 +1,137 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
+  TextInput,
+  TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  Alert,
 } from 'react-native';
-import { Button, Input } from 'react-native-elements';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, clearError } from '../store/authSlice';
-import Toast from 'react-native-toast-message';
 
-const RegisterScreen = ({ navigation }) => {
+const RegisterScreen = ({navigation}) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
     firstName: '',
     lastName: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const dispatch = useDispatch();
-  const { isLoading } = useSelector((state) => state.auth);
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const validateForm = () => {
-    const { username, email, password, confirmPassword } = formData;
-    
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please fill in all required fields',
-      });
-      return false;
-    }
-
-    if (username.length < 3) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Username must be at least 3 characters long',
-      });
-      return false;
-    }
-
-    if (password.length < 6) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Password must be at least 6 characters long',
-      });
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Passwords do not match',
-      });
-      return false;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please enter a valid email address',
-      });
-      return false;
-    }
-
-    return true;
-  };
 
   const handleRegister = async () => {
-    if (!validateForm()) return;
+    if (!formData.username || !formData.email || !formData.password) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
 
     try {
-      const { confirmPassword, ...registrationData } = formData;
-      await dispatch(registerUser(registrationData)).unwrap();
-      
-      Toast.show({
-        type: 'success',
-        text1: 'Registration Successful!',
-        text2: 'You can now sign in with your credentials',
-      });
-      
+      // TODO: Replace with actual API call to http://localhost:8080/api/auth/register
+      Alert.alert('Success', 'Registration successful! Please login.');
       navigation.navigate('Login');
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Registration Failed',
-        text2: error || 'Please try again',
-      });
+      Alert.alert('Error', 'Registration failed');
     }
-  };
-
-  const navigateToLogin = () => {
-    dispatch(clearError());
-    navigation.navigate('Login');
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the Buddy community</Text>
-        </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Create Account</Text>
 
-        <View style={styles.form}>
-          <Input
-            placeholder="Username *"
-            value={formData.username}
-            onChangeText={(value) => handleInputChange('username', value)}
-            leftIcon={{ type: 'material', name: 'person' }}
-            containerStyle={styles.inputContainer}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+      <TextInput
+        style={styles.input}
+        placeholder="Username *"
+        value={formData.username}
+        onChangeText={text => setFormData({...formData, username: text})}
+        autoCapitalize="none"
+      />
 
-          <Input
-            placeholder="Email *"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
-            leftIcon={{ type: 'material', name: 'email' }}
-            containerStyle={styles.inputContainer}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-          />
+      <TextInput
+        style={styles.input}
+        placeholder="Email *"
+        value={formData.email}
+        onChangeText={text => setFormData({...formData, email: text})}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
 
-          <Input
-            placeholder="First Name"
-            value={formData.firstName}
-            onChangeText={(value) => handleInputChange('firstName', value)}
-            leftIcon={{ type: 'material', name: 'badge' }}
-            containerStyle={styles.inputContainer}
-            autoCapitalize="words"
-          />
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={formData.firstName}
+        onChangeText={text => setFormData({...formData, firstName: text})}
+      />
 
-          <Input
-            placeholder="Last Name"
-            value={formData.lastName}
-            onChangeText={(value) => handleInputChange('lastName', value)}
-            leftIcon={{ type: 'material', name: 'badge' }}
-            containerStyle={styles.inputContainer}
-            autoCapitalize="words"
-          />
+      <TextInput
+        style={styles.input}
+        placeholder="Last Name"
+        value={formData.lastName}
+        onChangeText={text => setFormData({...formData, lastName: text})}
+      />
 
-          <Input
-            placeholder="Password *"
-            value={formData.password}
-            onChangeText={(value) => handleInputChange('password', value)}
-            secureTextEntry={!showPassword}
-            leftIcon={{ type: 'material', name: 'lock' }}
-            rightIcon={{
-              type: 'material',
-              name: showPassword ? 'visibility' : 'visibility-off',
-              onPress: () => setShowPassword(!showPassword),
-            }}
-            containerStyle={styles.inputContainer}
-          />
+      <TextInput
+        style={styles.input}
+        placeholder="Password *"
+        value={formData.password}
+        onChangeText={text => setFormData({...formData, password: text})}
+        secureTextEntry
+      />
 
-          <Input
-            placeholder="Confirm Password *"
-            value={formData.confirmPassword}
-            onChangeText={(value) => handleInputChange('confirmPassword', value)}
-            secureTextEntry={!showConfirmPassword}
-            leftIcon={{ type: 'material', name: 'lock' }}
-            rightIcon={{
-              type: 'material',
-              name: showConfirmPassword ? 'visibility' : 'visibility-off',
-              onPress: () => setShowConfirmPassword(!showConfirmPassword),
-            }}
-            containerStyle={styles.inputContainer}
-          />
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Register</Text>
+      </TouchableOpacity>
 
-          <Button
-            title="Create Account"
-            onPress={handleRegister}
-            loading={isLoading}
-            buttonStyle={styles.registerButton}
-            titleStyle={styles.buttonText}
-          />
-
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
-            <Button
-              title="Sign In"
-              type="clear"
-              onPress={navigateToLogin}
-              titleStyle={styles.loginButton}
-            />
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <TouchableOpacity
+        style={styles.linkButton}
+        onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.linkText}>Already have an account? Login</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
     backgroundColor: '#f5f5f5',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    color: '#6200EE',
+    marginBottom: 30,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  form: {
+  input: {
     width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    backgroundColor: '#fff',
   },
-  inputContainer: {
+  button: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#6200EE',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 15,
   },
-  registerButton: {
-    backgroundColor: '#28a745',
-    borderRadius: 25,
-    paddingVertical: 15,
-    marginTop: 20,
-  },
   buttonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 30,
+  linkButton: {
+    padding: 10,
   },
-  loginText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  loginButton: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  linkText: {
+    color: '#6200EE',
+    fontSize: 14,
   },
 });
 

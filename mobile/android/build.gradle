@@ -7,29 +7,25 @@ buildscript {
         compileSdkVersion = 34
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
-        kotlinVersion = "1.8.0"               // Compatible with RN 0.74.1
+        kotlinVersion = "1.8.0"
     }
     repositories {
-        // React Native repositories MUST come first for plugin resolution
-        maven {
-            url("$rootDir/../node_modules/react-native/android")
-        }
         google()
         mavenCentral()
         gradlePluginPortal()
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.1.1")
-        classpath("com.facebook.react:react-native-gradle-plugin:0.74.81")  // Match devDependencies version
+        classpath("com.facebook.react:react-native-gradle-plugin:0.74.81")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
-        // Add Google Services plugin for Firebase
-        classpath 'com.google.gms:google-services:4.4.0'
     }
 }
 
 allprojects {
     repositories {
-        // React Native repositories MUST come first
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../node_modules/react-native/android")
@@ -38,9 +34,6 @@ allprojects {
             // Android JSC is installed from npm
             url("$rootDir/../node_modules/jsc-android/dist")
         }
-        google()
-        mavenCentral()
-        maven { url "https://www.jitpack.io" }
         mavenCentral {
             // We don't want to fetch react-native from Maven Central as there are
             // older versions over there.
@@ -51,4 +44,4 @@ allprojects {
     }
 }
 
-apply plugin: "com.facebook.react.rootproject"
+apply plugin: "com.facebook.react.rootproject" 
