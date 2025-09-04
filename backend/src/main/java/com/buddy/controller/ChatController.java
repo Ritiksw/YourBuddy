@@ -12,13 +12,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/chat")
 @CrossOrigin(origins = "*")
 public class ChatController {
     
-    @Autowired
+    @Autowired(required = false)
     private FirestoreService firestoreService;
     
     @Autowired
@@ -28,6 +29,13 @@ public class ChatController {
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> request,
                                        Authentication authentication) {
         try {
+            if (firestoreService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Chat functionality requires Firebase setup",
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             String content = request.get("content");
             String receiverId = request.get("receiverId");
             String type = request.get("type") != null ? request.get("type") : "text";
@@ -70,6 +78,13 @@ public class ChatController {
     public ResponseEntity<?> getChatHistory(@PathVariable String receiverId,
                                           Authentication authentication) {
         try {
+            if (firestoreService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "messages", Collections.emptyList(),
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User sender = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -88,6 +103,14 @@ public class ChatController {
     @GetMapping("/unread")
     public ResponseEntity<?> getUnreadMessages(Authentication authentication) {
         try {
+            if (firestoreService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "unreadCount", 0,
+                    "messages", Collections.emptyList(),
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -109,6 +132,13 @@ public class ChatController {
     @PutMapping("/read/{messageId}")
     public ResponseEntity<?> markMessageAsRead(@PathVariable String messageId) {
         try {
+            if (firestoreService == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Message read status requires Firebase setup",
+                    "status", "firebase_not_configured"
+                ));
+            }
+            
             firestoreService.markMessageAsRead(messageId);
             
             return ResponseEntity.ok(Map.of("message", "Message marked as read"));
