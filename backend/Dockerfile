@@ -1,26 +1,29 @@
-FROM openjdk:17-jdk-slim
+FROM maven:3.9-openjdk-17-slim AS build
 
 WORKDIR /app
 
-# Copy Maven files for dependency caching
+# Copy pom.xml first for dependency caching
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-
-# Make mvnw executable
-RUN chmod +x ./mvnw
 
 # Download dependencies
-RUN ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # Copy source code
 COPY src ./src
 
 # Build the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
+
+# Runtime stage
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy the built JAR from build stage
+COPY --from=build /app/target/buddy-backend-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose port
 EXPOSE 8080
 
 # Run the application
-CMD ["java", "-jar", "target/buddy-backend-0.0.1-SNAPSHOT.jar"] 
+CMD ["java", "-jar", "app.jar"] 
