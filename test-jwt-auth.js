@@ -22,8 +22,8 @@ async function testCompleteAuthFlow() {
     // Step 2: Test login endpoint
     console.log('\n2. Testing login...');
     const loginPayload = {
-      username: 'testuser',
-      password: 'password123'
+      username: 'Ritik',
+      password: '123456'
     };
     
     console.log('Login payload:', loginPayload);
@@ -77,15 +77,16 @@ async function testCompleteAuthFlow() {
     const goalPayload = {
       title: 'Test Goal from Auth Script',
       category: 'FITNESS',
+      type: 'HABIT',
+      difficulty: 'MEDIUM',
       startDate: '2024-01-15',
       targetDate: '2024-02-15',
       description: 'Test goal for authentication verification',
-      difficulty: 'MEDIUM',
       isPublic: true,
       maxBuddies: 3
     };
     
-    console.log('Goal payload:', goalPayload);
+    console.log('Goal payload:', JSON.stringify(goalPayload, null, 2));
     console.log('Authorization header:', `Bearer ${token.substring(0, 20)}...`);
     
     const goalResponse = await axios.post(`${API_BASE}/goals`, goalPayload, {

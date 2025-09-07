@@ -37,7 +37,7 @@ public class GoalController {
     private BuddyMatchingService buddyMatchingService;
     
     @PostMapping
-    public ResponseEntity<?> createGoal(@Valid @RequestBody Map<String, Object> goalRequest,
+    public ResponseEntity<?> createGoal(@RequestBody Map<String, Object> goalRequest,
                                        Authentication authentication) {
         try {
             // Check authentication first
@@ -204,8 +204,9 @@ public class GoalController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
+            logger.error("Goal creation failed with exception: ", e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Goal creation service temporarily unavailable: " + e.getMessage()));
+                    .body(Map.of("error", "Goal creation failed: " + e.getMessage()));
         }
     }
     
