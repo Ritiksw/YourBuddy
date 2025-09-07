@@ -1,8 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Text } from 'react-native';
 
-// Import screens with error handling
 import HomeScreen from '../screens/HomeScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import BuddiesScreen from '../screens/BuddiesScreen';
@@ -17,34 +16,36 @@ const MainNavigator = () => {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName = 'home'; // Default icon
+          let emoji = '🏠'; // Default emoji
 
           switch (route.name) {
             case 'Home':
-              iconName = 'home';
+              emoji = '🏠';
               break;
             case 'Goals':
-              iconName = 'flag';
+              emoji = '🎯';
               break;
             case 'Buddies':
-              iconName = 'people';
+              emoji = '👥';
               break;
             case 'Chat':
-              iconName = 'chat';
+              emoji = '💬';
               break;
             case 'Profile':
-              iconName = 'person';
+              emoji = '👤';
               break;
             default:
-              iconName = 'home';
+              emoji = '🏠';
           }
 
+          // Return emoji as text component (no font loading required)
           return (
-            <MaterialIcons 
-              name={iconName} 
-              size={size || 24} 
-              color={color || '#666'} 
-            />
+            <Text style={{ 
+              fontSize: size || 24, 
+              opacity: focused ? 1 : 0.6 
+            }}>
+              {emoji}
+            </Text>
           );
         },
         tabBarActiveTintColor: '#6200EE',
