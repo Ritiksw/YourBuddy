@@ -6,6 +6,8 @@ import com.buddy.repository.GoalRepository;
 import com.buddy.repository.UserRepository;
 import com.buddy.service.BuddyMatchingService;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/goals")
@@ -35,6 +38,9 @@ public class GoalController {
     
     @Autowired(required = false)
     private BuddyMatchingService buddyMatchingService;
+    
+    @Autowired
+    private Validator validator;
     
     @PostMapping
     public ResponseEntity<?> createGoal(@RequestBody Map<String, Object> goalRequest,
@@ -193,6 +199,18 @@ public class GoalController {
             // Initialize progress
             goal.setCurrentProgress(0);
             goal.setStatus(Goal.GoalStatus.ACTIVE);
+            
+            // Validate the Goal object after all fields are set
+            Set<ConstraintViolation<Goal>> violations = validator.validate(goal);
+            if (!violations.isEmpty()) {
+                StringBuilder errorMsg = new StringBuilder("Validation failed: ");
+                for (ConstraintViolation<Goal> violation : violations) {
+                    errorMsg.append(violation.getPropertyPath()).append(" ").append(violation.getMessage()).append("; ");
+                }
+                logger.warn("Goal validation failed: {}", errorMsg);
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", errorMsg.toString()));
+            }
             
             Goal savedGoal = goalRepository.save(goal);
             
