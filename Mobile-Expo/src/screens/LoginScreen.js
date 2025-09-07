@@ -5,6 +5,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import {
   Text,
@@ -17,6 +18,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, clearError } from '../store/authSlice';
 import { healthAPI } from '../services/api';
+import apiClient from '../services/api';
+import Constants from 'expo-constants';
 
 const LoginScreen = ({ navigation }) => {
   const [credentials, setCredentials] = useState({
@@ -24,12 +27,14 @@ const LoginScreen = ({ navigation }) => {
     password: '',
   });
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [apiUrl, setApiUrl] = useState('');
 
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
   useEffect(() => {
     checkBackendHealth();
+    setApiUrl(apiClient.defaults.baseURL);
   }, []);
 
   const checkBackendHealth = async () => {
@@ -37,8 +42,21 @@ const LoginScreen = ({ navigation }) => {
       await healthAPI.checkHealth();
       setBackendStatus('connected');
     } catch (error) {
+      console.log('Backend health check failed:', error);
       setBackendStatus('disconnected');
     }
+  };
+
+  const showDebugInfo = () => {
+    const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+    Alert.alert(
+      'Debug Info',
+      `API URL: ${apiUrl}\nExpo Host: ${debuggerHost || 'Not detected'}\nPlatform: ${Platform.OS}`,
+      [
+        { text: 'Test Connection', onPress: checkBackendHealth },
+        { text: 'OK' }
+      ]
+    );
   };
 
   const handleLogin = async () => {
@@ -119,8 +137,11 @@ const LoginScreen = ({ navigation }) => {
               Backend: {backendStatus === 'connected' ? 'Connected' : 'Disconnected'}
             </Text>
             <Text style={styles.statusText}>
-              🐳 Docker: http://localhost:8080
+              🔗 {apiUrl}
             </Text>
+            <TouchableOpacity onPress={showDebugInfo} style={styles.debugButton}>
+              <Text style={styles.debugText}>🔧 Debug Info</Text>
+            </TouchableOpacity>
           </View>
         </Card.Content>
       </Card>
@@ -174,6 +195,15 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     marginBottom: 5,
+    textAlign: 'center',
+  },
+  debugButton: {
+    marginTop: 10,
+    padding: 5,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#6200EE',
   },
 });
 
