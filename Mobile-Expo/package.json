@@ -27,7 +27,8 @@
     "react-hook-form": "^7.48.2",
     "react-native-paper": "^5.12.3",
     "react-native-vector-icons": "^10.0.3",
-    "@expo/vector-icons": "^14.0.2"
+    "@expo/vector-icons": "^14.0.2",
+    "@react-native-community/datetimepicker": "8.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

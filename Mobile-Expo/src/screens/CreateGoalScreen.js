@@ -13,6 +13,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { createGoal } from '../store/goalsSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CreateGoalScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -33,6 +34,12 @@ const CreateGoalScreen = ({ navigation }) => {
   });
 
   const [errors, setErrors] = useState({});
+  
+  // Date picker states
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showTargetDatePicker, setShowTargetDatePicker] = useState(false);
+  const [startDateObj, setStartDateObj] = useState(new Date());
+  const [targetDateObj, setTargetDateObj] = useState(new Date());
 
   const categories = [
     { value: 'FITNESS', label: '💪 Fitness', emoji: '💪' },
@@ -86,9 +93,28 @@ const CreateGoalScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('authToken');
       console.log('🔍 Auth Debug - Token exists:', !!token);
       console.log('🔍 Auth Debug - Token length:', token?.length || 0);
-      console.log('🔍 Auth Debug - Goal data:', goalData);
       
-      await dispatch(createGoal(goalData)).unwrap();
+      // Format goal data before sending
+      const formattedGoalData = {
+        ...goalData,
+        // Convert numeric fields properly
+        targetValue: goalData.targetValue && goalData.targetValue.trim() !== '' 
+          ? goalData.targetValue.trim() 
+          : undefined,
+        maxBuddies: Number(goalData.maxBuddies) || 3,
+        isPublic: Boolean(goalData.isPublic)
+      };
+      
+      // Remove undefined fields
+      Object.keys(formattedGoalData).forEach(key => {
+        if (formattedGoalData[key] === undefined || formattedGoalData[key] === '') {
+          delete formattedGoalData[key];
+        }
+      });
+      
+      console.log('🔍 Auth Debug - Formatted goal data:', formattedGoalData);
+      
+      await dispatch(createGoal(formattedGoalData)).unwrap();
       Alert.alert(
         'Success!',
         'Your goal has been created successfully!',
@@ -105,6 +131,33 @@ const CreateGoalScreen = ({ navigation }) => {
     if (errors[field]) {
       setErrors({ ...errors, [field]: null });
     }
+  };
+
+  // Date picker handlers
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setStartDateObj(selectedDate);
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      updateField('startDate', formattedDate);
+    }
+  };
+
+  const onTargetDateChange = (event, selectedDate) => {
+    setShowTargetDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setTargetDateObj(selectedDate);
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      updateField('targetDate', formattedDate);
+    }
+  };
+
+  const showStartPicker = () => {
+    setShowStartDatePicker(true);
+  };
+
+  const showTargetPicker = () => {
+    setShowTargetDatePicker(true);
   };
 
   return (
@@ -201,25 +254,50 @@ const CreateGoalScreen = ({ navigation }) => {
         <View style={styles.dateContainer}>
           <View style={styles.dateInputContainer}>
             <Text style={styles.label}>📅 Start Date *</Text>
-            <TextInput
-              style={styles.dateInput}
-              value={goalData.startDate}
-              onChangeText={(text) => updateField('startDate', text)}
-              placeholder="YYYY-MM-DD"
-            />
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={showStartPicker}>
+              <Text style={styles.dateButtonText}>
+                {goalData.startDate || 'Select Start Date'}
+              </Text>
+              <Text style={styles.calendarIcon}>📅</Text>
+            </TouchableOpacity>
           </View>
           
           <View style={styles.dateInputContainer}>
             <Text style={styles.label}>🎯 Target Date *</Text>
-            <TextInput
-              style={[styles.dateInput, errors.targetDate && styles.inputError]}
-              value={goalData.targetDate}
-              onChangeText={(text) => updateField('targetDate', text)}
-              placeholder="YYYY-MM-DD"
-            />
+            <TouchableOpacity
+              style={[styles.dateButton, errors.targetDate && styles.inputError]}
+              onPress={showTargetPicker}>
+              <Text style={styles.dateButtonText}>
+                {goalData.targetDate || 'Select Target Date'}
+              </Text>
+              <Text style={styles.calendarIcon}>📅</Text>
+            </TouchableOpacity>
             {errors.targetDate && <Text style={styles.errorText}>{errors.targetDate}</Text>}
           </View>
         </View>
+
+        {/* Date Pickers */}
+        {showStartDatePicker && (
+          <DateTimePicker
+            value={startDateObj}
+            mode="date"
+            display="default"
+            onChange={onStartDateChange}
+            minimumDate={new Date()}
+          />
+        )}
+
+        {showTargetDatePicker && (
+          <DateTimePicker
+            value={targetDateObj}
+            mode="date"
+            display="default"
+            onChange={onTargetDateChange}
+            minimumDate={new Date(startDateObj.getTime() + 24 * 60 * 60 * 1000)} // Next day after start
+          />
+        )}
 
         {/* Target Value */}
         <View style={styles.inputContainer}>
@@ -239,6 +317,9 @@ const CreateGoalScreen = ({ navigation }) => {
               placeholder="e.g., steps, pages, hours"
             />
           </View>
+          <Text style={styles.helpText}>
+            💡 Enter a number for target value (e.g., 30 for 30 days, 5000 for 5000 steps)
+          </Text>
         </View>
 
         {/* Max Buddies */}
@@ -437,7 +518,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 5,
   },
-  dateInput: {
+  dateButton: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -446,6 +527,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#333333',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333333',
+  },
+  calendarIcon: {
+    fontSize: 20,
+    marginLeft: 10,
   },
   targetContainer: {
     flexDirection: 'row',
@@ -537,6 +630,12 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  helpText: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 5,
+    paddingHorizontal: 10,
   },
 });
 
