@@ -38,7 +38,7 @@ public class GoalController {
     
     @PostMapping
     public ResponseEntity<?> createGoal(@Valid @RequestBody Map<String, Object> goalRequest,
-                                      Authentication authentication) {
+                                       Authentication authentication) {
         try {
             // Check authentication first
             logger.debug("Creating goal - Authentication check: {}", authentication != null ? "present" : "null");
@@ -182,7 +182,7 @@ public class GoalController {
                         goal.setMaxBuddies(Integer.parseInt((String) maxBuddiesObj));
                     } else if (maxBuddiesObj instanceof Number) {
                         goal.setMaxBuddies(((Number) maxBuddiesObj).intValue());
-                    }
+            }
                 } catch (NumberFormatException e) {
                     goal.setMaxBuddies(3); // default
                 }
@@ -275,7 +275,7 @@ public class GoalController {
     @PutMapping("/{goalId}")
     public ResponseEntity<?> updateGoal(@PathVariable Long goalId,
                                       @Valid @RequestBody Map<String, Object> goalRequest,
-                                      Authentication authentication) {
+                                       Authentication authentication) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.badRequest()
@@ -438,7 +438,7 @@ public class GoalController {
     @PostMapping("/{goalId}/progress")
     public ResponseEntity<?> updateProgress(@PathVariable Long goalId,
                                           @RequestBody Map<String, Object> progressData,
-                                          Authentication authentication) {
+                                         Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
@@ -467,8 +467,8 @@ public class GoalController {
                 } else {
                     return ResponseEntity.badRequest()
                             .body(Map.of("error", "Invalid progress value"));
-                }
-                
+            }
+            
                 // Validate progress range
                 newProgress = Math.max(0, Math.min(100, newProgress));
                 goal.setCurrentProgress(newProgress);
