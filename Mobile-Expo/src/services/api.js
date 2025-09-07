@@ -3,42 +3,38 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Docker backend URL - automatically detects your PC IP
+// Docker backend URL - automatically detects your PC IP from Expo
 const getBaseUrl = () => {
   if (__DEV__) {
-    // Get the IP address from Expo development server
+    // Get the IP address from Expo development server (this was the working solution!)
     const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
     
-    // Use your specific IP address for reliable connection
-    const PC_IP = '192.168.1.46'; // Your actual PC IP from ipconfig
+    console.log('Expo debugger host detected:', debuggerHost);
     
-    if (Platform.OS === 'android') {
-      // For Android emulator, use 10.0.2.2 (maps to localhost)
-      // For real Android device, use PC IP
-      const ip = debuggerHost || PC_IP;
-      return `http://${ip}:8080/api`;
+    if (debuggerHost) {
+      // Use the IP that Expo is already using for development
+      console.log(`Using Expo detected IP: ${debuggerHost}:8080`);
+      return `http://${debuggerHost}:8080/api`;
     } else {
-      // For iOS, use the debugger host IP or your PC IP
-      const ip = debuggerHost || PC_IP;
-      return `http://${ip}:8080/api`;
+      // Fallback to your known working IP
+      console.log('Fallback to known IP: 192.168.1.46:8080');
+      return `http://192.168.1.46:8080/api`;
     }
   } else {
-    // For production, use your production API URL
+    // For production
     return 'http://your-production-api.com/api';
   }
 };
 
 const BASE_URL = getBaseUrl();
+console.log('API Base URL:', BASE_URL);
 
-// Create axios instance with better configuration
+// Create axios instance
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000, // Increased timeout for mobile networks
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
-  },
-  validateStatus: function (status) {
-    return status < 500; // Don't throw for 4xx errors, handle them gracefully
   },
 });
 
@@ -56,72 +52,45 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject({
-      message: 'Request setup failed',
-      originalError: error
-    });
+    return Promise.reject(error);
   }
 );
 
-// Response interceptor for better error handling
+// Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response) => {
-    // Handle successful responses
-    if (response.status >= 200 && response.status < 300) {
-      return response.data;
-    }
-    // Handle 4xx errors gracefully
-    throw {
-      message: response.data?.error || response.data?.message || 'Request failed',
-      status: response.status,
-      data: response.data
-    };
-  },
+  (response) => response.data,
   async (error) => {
+    console.log('API Error:', error.response?.status, error.message);
     if (error.response?.status === 401) {
       // Handle unauthorized - logout user
       await AsyncStorage.removeItem('authToken');
-      throw {
-        message: 'Session expired. Please login again.',
-        status: 401,
-        requiresLogin: true
-      };
     }
-    
-    // Network or other errors
-    if (!error.response) {
-      throw {
-        message: 'Network error. Please check your connection and try again.',
-        isNetworkError: true
-      };
-    }
-    
-    throw {
-      message: error.response?.data?.error || error.response?.data?.message || 'An error occurred',
-      status: error.response?.status,
-      data: error.response?.data
-    };
+    return Promise.reject(error.response?.data || { message: error.message });
   }
 );
 
-// Authentication API with better error handling
+// Authentication API
 export const authAPI = {
   login: async (credentials) => {
     try {
+      console.log('Attempting login to:', BASE_URL + '/auth/login');
       const response = await apiClient.post('/auth/login', credentials);
       if (response.token) {
         await AsyncStorage.setItem('authToken', response.token);
       }
       return response;
     } catch (error) {
+      console.log('Login error:', error);
       throw error;
     }
   },
 
   register: async (userData) => {
     try {
+      console.log('Attempting registration to:', BASE_URL + '/auth/register');
       return await apiClient.post('/auth/register', userData);
     } catch (error) {
+      console.log('Registration error:', error);
       throw error;
     }
   },
@@ -144,7 +113,7 @@ export const authAPI = {
   },
 };
 
-// Goals API with error handling
+// Goals API
 export const goalsAPI = {
   getGoals: async () => {
     try {
@@ -261,8 +230,10 @@ export const chatAPI = {
 export const healthAPI = {
   checkHealth: async () => {
     try {
+      console.log('Checking health at:', BASE_URL + '/actuator/health');
       return await apiClient.get('/actuator/health');
     } catch (error) {
+      console.log('Health check failed:', error);
       throw error;
     }
   },
