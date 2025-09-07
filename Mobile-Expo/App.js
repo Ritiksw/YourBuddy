@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
+import { PaperProvider } from 'react-native-paper';
 import { store } from './src/store/store';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import MainNavigator from './src/navigation/MainNavigator';
@@ -17,13 +18,13 @@ const AppContent = () => {
   );
 };
 
-const App = () => {
+export default function App() {
   return (
     <Provider store={store}>
-      <AppContent />
-      <Toast />
+      <PaperProvider>
+        <AppContent />
+        <Toast />
+      </PaperProvider>
     </Provider>
   );
-};
-
-export default App; 
+} 
