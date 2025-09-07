@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 const getBaseUrl = () => {
   if (__DEV__) {
     // Get the IP address from Expo development server (this was the working solution!)
-    const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+    const debuggerHost = '192.168.1.46'
     
     console.log('Expo debugger host detected:', debuggerHost);
     
