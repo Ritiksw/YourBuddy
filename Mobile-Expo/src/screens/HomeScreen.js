@@ -67,8 +67,8 @@ const HomeScreen = ({ navigation }) => {
     );
   };
 
-  const activeGoals = goals.filter(goal => goal.status === 'ACTIVE');
-  const completedGoals = goals.filter(goal => goal.status === 'COMPLETED');
+  const activeGoals = goals?.filter(goal => goal.status === 'ACTIVE') || [];
+  const completedGoals = goals?.filter(goal => goal.status === 'COMPLETED') || [];
 
   return (
     <ScrollView 
@@ -95,7 +95,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{buddies.length}</Text>
+          <Text style={styles.statNumber}>{buddies?.length || 0}</Text>
           <Text style={styles.statLabel}>Buddies</Text>
         </View>
         
@@ -105,7 +105,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{unreadCount}</Text>
+          <Text style={styles.statNumber}>{unreadCount || 0}</Text>
           <Text style={styles.statLabel}>Messages</Text>
         </View>
       </View>

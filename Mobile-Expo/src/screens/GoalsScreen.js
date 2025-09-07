@@ -53,8 +53,9 @@ const GoalsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {goals.length === 0 ? (
+      {(!goals || goals.length === 0) ? (
         <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>🎯</Text>
           <Text style={styles.emptyText}>No goals yet!</Text>
           <Text style={styles.emptySubtext}>
             Create your first goal to find accountability buddies
@@ -174,6 +175,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: 20,

@@ -11,7 +11,7 @@ import { fetchUnreadMessages, setFirebaseAvailable } from '../store/chatSlice';
 
 const ChatScreen = () => {
   const dispatch = useDispatch();
-  const { unreadCount, firebaseAvailable, loading } = useSelector(state => state.chat);
+  const { unreadCount, firebaseAvailable } = useSelector(state => state.chat);
   const [backendStatus, setBackendStatus] = useState('checking');
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const ChatScreen = () => {
       await dispatch(fetchUnreadMessages()).unwrap();
       setBackendStatus('connected');
     } catch (error) {
-      if (error.includes('firebase_not_configured')) {
+      if (error.includes && error.includes('firebase_not_configured')) {
         dispatch(setFirebaseAvailable(false));
         setBackendStatus('firebase_optional');
       } else {
@@ -90,7 +90,7 @@ const ChatScreen = () => {
         
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>Unread Messages:</Text>
-          <Text style={styles.statusValue}>{unreadCount}</Text>
+          <Text style={styles.statusValue}>{unreadCount || 0}</Text>
         </View>
         
         <Text style={styles.apiUrl}>

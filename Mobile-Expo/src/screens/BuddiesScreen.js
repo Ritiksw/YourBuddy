@@ -82,6 +82,26 @@ const BuddiesScreen = () => {
     </View>
   );
 
+  const renderEmptyBuddies = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyIcon}>👥</Text>
+      <Text style={styles.emptyText}>No buddies yet!</Text>
+      <Text style={styles.emptySubtext}>
+        Check recommendations to find accountability partners
+      </Text>
+    </View>
+  );
+
+  const renderEmptyRecommendations = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyIcon}>🔍</Text>
+      <Text style={styles.emptyText}>No recommendations</Text>
+      <Text style={styles.emptySubtext}>
+        Create goals to get buddy recommendations
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.tabContainer}>
@@ -89,26 +109,21 @@ const BuddiesScreen = () => {
           style={[styles.tab, activeTab === 'buddies' && styles.activeTab]}
           onPress={() => setActiveTab('buddies')}>
           <Text style={[styles.tabText, activeTab === 'buddies' && styles.activeTabText]}>
-            My Buddies ({buddies.length})
+            My Buddies ({buddies?.length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'recommendations' && styles.activeTab]}
           onPress={() => setActiveTab('recommendations')}>
           <Text style={[styles.tabText, activeTab === 'recommendations' && styles.activeTabText]}>
-            Find Buddies ({recommendations.length})
+            Find Buddies ({recommendations?.length || 0})
           </Text>
         </TouchableOpacity>
       </View>
 
       {activeTab === 'buddies' ? (
-        buddies.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No buddies yet!</Text>
-            <Text style={styles.emptySubtext}>
-              Check recommendations to find accountability partners
-            </Text>
-          </View>
+        (!buddies || buddies.length === 0) ? (
+          renderEmptyBuddies()
         ) : (
           <FlatList
             data={buddies}
@@ -122,13 +137,8 @@ const BuddiesScreen = () => {
           />
         )
       ) : (
-        recommendations.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No recommendations</Text>
-            <Text style={styles.emptySubtext}>
-              Create goals to get buddy recommendations
-            </Text>
-          </View>
+        (!recommendations || recommendations.length === 0) ? (
+          renderEmptyRecommendations()
         ) : (
           <FlatList
             data={recommendations}
@@ -270,6 +280,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: 20,
