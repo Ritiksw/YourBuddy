@@ -159,12 +159,23 @@ public class GoalController {
             Object targetValueObj = goalRequest.get("targetValue");
             if (targetValueObj != null) {
                 try {
-                    if (targetValueObj instanceof String && !((String) targetValueObj).trim().isEmpty()) {
-                        goal.setTargetValue(Integer.parseInt((String) targetValueObj));
+                    if (targetValueObj instanceof String) {
+                        String targetValueStr = (String) targetValueObj;
+                        if (!targetValueStr.trim().isEmpty()) {
+                            // Only try to parse if it's a valid number
+                            try {
+                                goal.setTargetValue(Integer.parseInt(targetValueStr.trim()));
+                            } catch (NumberFormatException e) {
+                                // If it's not a valid number, ignore it (don't set targetValue)
+                                logger.debug("Invalid targetValue format: {}, ignoring", targetValueStr);
+                            }
+                        }
                     } else if (targetValueObj instanceof Number) {
                         goal.setTargetValue(((Number) targetValueObj).intValue());
                     }
-                } catch (NumberFormatException e) {
+                    // If it's any other type, just ignore it
+                } catch (Exception e) {
+                    logger.debug("Error processing targetValue: {}, ignoring", e.getMessage());
                     // Ignore invalid target values
                 }
             }
@@ -185,11 +196,24 @@ public class GoalController {
             if (maxBuddiesObj != null) {
                 try {
                     if (maxBuddiesObj instanceof String) {
-                        goal.setMaxBuddies(Integer.parseInt((String) maxBuddiesObj));
+                        String maxBuddiesStr = (String) maxBuddiesObj;
+                        if (!maxBuddiesStr.trim().isEmpty()) {
+                            try {
+                                goal.setMaxBuddies(Integer.parseInt(maxBuddiesStr.trim()));
+                            } catch (NumberFormatException e) {
+                                logger.debug("Invalid maxBuddies format: {}, using default", maxBuddiesStr);
+                                goal.setMaxBuddies(3); // default
+                            }
+                        } else {
+                            goal.setMaxBuddies(3); // default for empty string
+                        }
                     } else if (maxBuddiesObj instanceof Number) {
                         goal.setMaxBuddies(((Number) maxBuddiesObj).intValue());
-            }
-                } catch (NumberFormatException e) {
+                    } else {
+                        goal.setMaxBuddies(3); // default for other types
+                    }
+                } catch (Exception e) {
+                    logger.debug("Error processing maxBuddies: {}, using default", e.getMessage());
                     goal.setMaxBuddies(3); // default
                 }
             } else {
