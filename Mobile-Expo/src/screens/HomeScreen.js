@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
-import {
-  Text,
-  Card,
-  Button,
-  Title,
-  Paragraph,
-  Chip,
-  Surface,
-} from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
 import { fetchGoals } from '../store/goalsSlice';
@@ -59,7 +53,18 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: () => dispatch(logout())
+        },
+      ]
+    );
   };
 
   const activeGoals = goals.filter(goal => goal.status === 'ACTIVE');
@@ -73,125 +78,113 @@ const HomeScreen = ({ navigation }) => {
       }>
       
       {/* Welcome Card */}
-      <Card style={styles.welcomeCard}>
-        <Card.Content>
-          <Title style={styles.welcomeTitle}>
-            Welcome back, {user?.firstName || user?.username}! 👋
-          </Title>
-          <Paragraph style={styles.welcomeSubtitle}>
-            Ready to achieve your goals with your accountability buddies?
-          </Paragraph>
-        </Card.Content>
-      </Card>
+      <View style={styles.welcomeCard}>
+        <Text style={styles.welcomeTitle}>
+          Welcome back, {user?.firstName || user?.username}! 👋
+        </Text>
+        <Text style={styles.welcomeSubtitle}>
+          Ready to achieve your goals with your accountability buddies?
+        </Text>
+      </View>
 
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
-        <Surface style={styles.statCard}>
+        <View style={styles.statCard}>
           <Text style={styles.statNumber}>{activeGoals.length}</Text>
           <Text style={styles.statLabel}>Active Goals</Text>
-        </Surface>
+        </View>
         
-        <Surface style={styles.statCard}>
+        <View style={styles.statCard}>
           <Text style={styles.statNumber}>{buddies.length}</Text>
           <Text style={styles.statLabel}>Buddies</Text>
-        </Surface>
+        </View>
         
-        <Surface style={styles.statCard}>
+        <View style={styles.statCard}>
           <Text style={styles.statNumber}>{completedGoals.length}</Text>
           <Text style={styles.statLabel}>Completed</Text>
-        </Surface>
+        </View>
         
-        <Surface style={styles.statCard}>
+        <View style={styles.statCard}>
           <Text style={styles.statNumber}>{unreadCount}</Text>
           <Text style={styles.statLabel}>Messages</Text>
-        </Surface>
+        </View>
       </View>
 
       {/* Quick Actions */}
-      <Card style={styles.actionsCard}>
-        <Card.Content>
-          <Title style={styles.cardTitle}>Quick Actions</Title>
+      <View style={styles.actionsCard}>
+        <Text style={styles.cardTitle}>Quick Actions</Text>
+        
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Goals')}>
+            <Text style={styles.actionButtonText}>🎯 View Goals</Text>
+          </TouchableOpacity>
           
-          <View style={styles.actionButtons}>
-            <Button
-              mode="contained"
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Goals')}
-              icon="flag">
-              View Goals
-            </Button>
-            
-            <Button
-              mode="contained"
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Buddies')}
-              icon="people">
-              Find Buddies
-            </Button>
-          </View>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Buddies')}>
+            <Text style={styles.actionButtonText}>👥 Find Buddies</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={() => navigation.navigate('Chat')}>
+            <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
+              💬 Chat {unreadCount > 0 ? `(${unreadCount})` : ''}
+            </Text>
+          </TouchableOpacity>
           
-          <View style={styles.actionButtons}>
-            <Button
-              mode="outlined"
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Chat')}
-              icon="chat">
-              Chat {unreadCount > 0 && `(${unreadCount})`}
-            </Button>
-            
-            <Button
-              mode="outlined"
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Profile')}
-              icon="person">
-              Profile
-            </Button>
-          </View>
-        </Card.Content>
-      </Card>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={() => navigation.navigate('Profile')}>
+            <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
+              👤 Profile
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Backend Status */}
-      <Card style={styles.statusCard}>
-        <Card.Content>
-          <Title style={styles.cardTitle}>System Status</Title>
-          
-          <View style={styles.statusRow}>
-            <Chip 
-              icon={backendStatus === 'connected' ? 'check' : 'close'}
-              style={[
-                styles.statusChip,
-                { backgroundColor: backendStatus === 'connected' ? '#e8f5e8' : '#ffeaea' }
-              ]}>
-              Backend API
-            </Chip>
-            <Text style={styles.statusText}>
-              {backendStatus === 'connected' ? 'Connected' : 'Disconnected'}
+      <View style={styles.statusCard}>
+        <Text style={styles.cardTitle}>System Status</Text>
+        
+        <View style={styles.statusRow}>
+          <View style={[
+            styles.statusChip,
+            { backgroundColor: backendStatus === 'connected' ? '#e8f5e8' : '#ffeaea' }
+          ]}>
+            <Text style={styles.chipText}>
+              {backendStatus === 'connected' ? '✅' : '❌'} Backend API
             </Text>
           </View>
-          
-          <View style={styles.statusRow}>
-            <Chip icon="docker" style={styles.statusChip}>
-              Docker
-            </Chip>
-            <Text style={styles.statusText}>
-              PostgreSQL + Spring Boot
-            </Text>
-          </View>
-          
-          <Text style={styles.apiUrl}>
-            🔗 http://localhost:8080/api
+          <Text style={styles.statusText}>
+            {backendStatus === 'connected' ? 'Connected' : 'Disconnected'}
           </Text>
-        </Card.Content>
-      </Card>
+        </View>
+        
+        <View style={styles.statusRow}>
+          <View style={styles.statusChip}>
+            <Text style={styles.chipText}>🐳 Docker</Text>
+          </View>
+          <Text style={styles.statusText}>
+            PostgreSQL + Spring Boot
+          </Text>
+        </View>
+        
+        <Text style={styles.apiUrl}>
+          🔗 http://192.168.1.46:8080/api
+        </Text>
+      </View>
 
       {/* Logout Button */}
-      <Button
-        mode="text"
-        onPress={handleLogout}
+      <TouchableOpacity
         style={styles.logoutButton}
-        textColor="#e53e3e">
-        Logout
-      </Button>
+        onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -202,18 +195,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   welcomeCard: {
+    backgroundColor: '#ffffff',
     margin: 20,
+    padding: 25,
+    borderRadius: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 4,
   },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#333333',
     marginBottom: 10,
+    textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -224,9 +230,17 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     alignItems: 'center',
+    backgroundColor: '#ffffff',
     padding: 15,
     marginHorizontal: 5,
     borderRadius: 8,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
   statNumber: {
@@ -236,23 +250,45 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#666666',
     marginTop: 5,
+    textAlign: 'center',
   },
   actionsCard: {
+    backgroundColor: '#ffffff',
     marginHorizontal: 20,
     marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 4,
   },
   statusCard: {
+    backgroundColor: '#ffffff',
     marginHorizontal: 20,
     marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 4,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
+    color: '#333333',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -261,7 +297,26 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+    backgroundColor: '#6200EE',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#6200EE',
+  },
+  actionButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  secondaryButtonText: {
+    color: '#6200EE',
   },
   statusRow: {
     flexDirection: 'row',
@@ -269,21 +324,41 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   statusChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     marginRight: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   statusText: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
   },
   apiUrl: {
     fontSize: 12,
-    color: '#888',
-    fontFamily: 'monospace',
+    color: '#888888',
+    textAlign: 'center',
     marginTop: 10,
+    fontFamily: 'monospace',
   },
   logoutButton: {
     marginHorizontal: 20,
     marginBottom: 30,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e53e3e',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#e53e3e',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
