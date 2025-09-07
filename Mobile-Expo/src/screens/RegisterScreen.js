@@ -98,7 +98,7 @@ const RegisterScreen = ({ navigation }) => {
             <Title style={styles.title}>Create Your Account</Title>
 
             <TextInput
-              label="Username *"
+              label="👤 Username *"
               value={formData.username}
               onChangeText={(text) => {
                 setFormData({ ...formData, username: text });
@@ -110,14 +110,14 @@ const RegisterScreen = ({ navigation }) => {
               autoCapitalize="none"
               disabled={loading}
               error={!!errors.username}
-              left={<TextInput.Icon icon="account" />}
+              mode="outlined"
             />
             <HelperText type="error" visible={!!errors.username}>
               {errors.username}
             </HelperText>
 
             <TextInput
-              label="Email *"
+              label="📧 Email *"
               value={formData.email}
               onChangeText={(text) => {
                 setFormData({ ...formData, email: text });
@@ -130,14 +130,14 @@ const RegisterScreen = ({ navigation }) => {
               autoCapitalize="none"
               disabled={loading}
               error={!!errors.email}
-              left={<TextInput.Icon icon="email" />}
+              mode="outlined"
             />
             <HelperText type="error" visible={!!errors.email}>
               {errors.email}
             </HelperText>
 
             <TextInput
-              label="First Name *"
+              label="👨 First Name *"
               value={formData.firstName}
               onChangeText={(text) => {
                 setFormData({ ...formData, firstName: text });
@@ -148,14 +148,14 @@ const RegisterScreen = ({ navigation }) => {
               style={styles.input}
               disabled={loading}
               error={!!errors.firstName}
-              left={<TextInput.Icon icon="account-outline" />}
+              mode="outlined"
             />
             <HelperText type="error" visible={!!errors.firstName}>
               {errors.firstName}
             </HelperText>
 
             <TextInput
-              label="Last Name *"
+              label="👩 Last Name *"
               value={formData.lastName}
               onChangeText={(text) => {
                 setFormData({ ...formData, lastName: text });
@@ -166,14 +166,14 @@ const RegisterScreen = ({ navigation }) => {
               style={styles.input}
               disabled={loading}
               error={!!errors.lastName}
-              left={<TextInput.Icon icon="account-outline" />}
+              mode="outlined"
             />
             <HelperText type="error" visible={!!errors.lastName}>
               {errors.lastName}
             </HelperText>
 
             <TextInput
-              label="Password *"
+              label="🔒 Password *"
               value={formData.password}
               onChangeText={(text) => {
                 setFormData({ ...formData, password: text });
@@ -185,7 +185,7 @@ const RegisterScreen = ({ navigation }) => {
               secureTextEntry
               disabled={loading}
               error={!!errors.password}
-              left={<TextInput.Icon icon="lock" />}
+              mode="outlined"
             />
             <HelperText type="error" visible={!!errors.password}>
               {errors.password}

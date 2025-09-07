@@ -13,7 +13,6 @@ import {
   Card,
   Title,
   Paragraph,
-  HelperText,
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, clearError } from '../store/authSlice';
@@ -71,7 +70,7 @@ const LoginScreen = ({ navigation }) => {
           </Paragraph>
 
           <TextInput
-            label="Username"
+            label="👤 Username"
             value={credentials.username}
             onChangeText={(text) =>
               setCredentials({ ...credentials, username: text })
@@ -79,11 +78,11 @@ const LoginScreen = ({ navigation }) => {
             style={styles.input}
             autoCapitalize="none"
             disabled={loading}
-            left={<TextInput.Icon icon="account" />}
+            mode="outlined"
           />
 
           <TextInput
-            label="Password"
+            label="🔒 Password"
             value={credentials.password}
             onChangeText={(text) =>
               setCredentials({ ...credentials, password: text })
@@ -91,7 +90,7 @@ const LoginScreen = ({ navigation }) => {
             style={styles.input}
             secureTextEntry
             disabled={loading}
-            left={<TextInput.Icon icon="lock" />}
+            mode="outlined"
           />
 
           <Button
@@ -114,7 +113,7 @@ const LoginScreen = ({ navigation }) => {
           <View style={styles.statusContainer}>
             <Text style={[
               styles.statusText,
-              { color: backendStatus === 'connected' ? 'green' : 'red' }
+              { color: backendStatus === 'connected' ? '#4CAF50' : '#F44336' }
             ]}>
               {backendStatus === 'connected' ? '✅' : '❌'} 
               Backend: {backendStatus === 'connected' ? 'Connected' : 'Disconnected'}
