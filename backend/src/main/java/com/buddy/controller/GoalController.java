@@ -69,8 +69,8 @@ public class GoalController {
                         .body(Map.of("error", "Invalid authentication token"));
             }
             
-            // Input validation
-            String title = (String) goalRequest.get("title");
+            // Input validation with safe type conversion
+            String title = safeGetString(goalRequest, "title");
             if (title == null || title.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Goal title is required"));
@@ -80,31 +80,45 @@ public class GoalController {
                         .body(Map.of("error", "Goal title must be less than 200 characters"));
             }
             
-            String description = (String) goalRequest.get("description");
+            String description = safeGetString(goalRequest, "description");
             if (description != null && description.length() > 1000) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Goal description must be less than 1000 characters"));
             }
             
-            String categoryStr = (String) goalRequest.get("category");
-            if (categoryStr == null) {
+            String categoryStr = safeGetString(goalRequest, "category");
+            if (categoryStr == null || categoryStr.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Goal category is required"));
             }
             
-            String startDateStr = (String) goalRequest.get("startDate");
-            String targetDateStr = (String) goalRequest.get("targetDate");
+            // Set dates with safe conversion
+            LocalDate startDate = safeGetDate(goalRequest, "startDate");
+            LocalDate targetDate = safeGetDate(goalRequest, "targetDate");
             
-            if (startDateStr == null || targetDateStr == null) {
+            if (startDate == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Start date and target date are required"));
+                        .body(Map.of("error", "Valid start date is required (YYYY-MM-DD format)"));
             }
+            
+            if (targetDate == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Valid target date is required (YYYY-MM-DD format)"));
+            }
+            
+            if (targetDate.isBefore(startDate) || targetDate.isEqual(startDate)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Target date must be after start date"));
+            }
+            
+            Goal goal = new Goal();
+            goal.setStartDate(startDate);
+            goal.setTargetDate(targetDate);
             
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
-            Goal goal = new Goal();
             goal.setUser(user);
             goal.setTitle(title.trim());
             goal.setDescription(description != null ? description.trim() : null);
@@ -118,7 +132,7 @@ public class GoalController {
             }
             
             // Set type (default to HABIT if not provided)
-            String typeStr = (String) goalRequest.get("type");
+            String typeStr = safeGetString(goalRequest, "type");
             if (typeStr != null) {
                 try {
                     goal.setType(Goal.GoalType.valueOf(typeStr.toUpperCase()));
@@ -130,7 +144,7 @@ public class GoalController {
             }
             
             // Set difficulty
-            String difficultyStr = (String) goalRequest.get("difficulty");
+            String difficultyStr = safeGetString(goalRequest, "difficulty");
             if (difficultyStr != null) {
                 try {
                     goal.setDifficulty(Goal.DifficultyLevel.valueOf(difficultyStr.toUpperCase()));
@@ -141,84 +155,22 @@ public class GoalController {
                 goal.setDifficulty(Goal.DifficultyLevel.MEDIUM);
             }
             
-            // Set dates
-            try {
-                goal.setStartDate(LocalDate.parse(startDateStr));
-                goal.setTargetDate(LocalDate.parse(targetDateStr));
-                
-                if (goal.getTargetDate().isBefore(goal.getStartDate()) || goal.getTargetDate().isEqual(goal.getStartDate())) {
-                    return ResponseEntity.badRequest()
-                            .body(Map.of("error", "Target date must be after start date"));
-                }
-            } catch (Exception e) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Invalid date format. Use YYYY-MM-DD"));
+            // Set optional fields with safe type conversion
+            Integer targetValue = safeGetInteger(goalRequest, "targetValue");
+            if (targetValue != null) {
+                goal.setTargetValue(targetValue);
             }
             
-            // Set optional fields
-            Object targetValueObj = goalRequest.get("targetValue");
-            if (targetValueObj != null) {
-                try {
-                    if (targetValueObj instanceof String) {
-                        String targetValueStr = (String) targetValueObj;
-                        if (!targetValueStr.trim().isEmpty()) {
-                            // Only try to parse if it's a valid number
-                            try {
-                                goal.setTargetValue(Integer.parseInt(targetValueStr.trim()));
-                            } catch (NumberFormatException e) {
-                                // If it's not a valid number, ignore it (don't set targetValue)
-                                logger.debug("Invalid targetValue format: {}, ignoring", targetValueStr);
-                            }
-                        }
-                    } else if (targetValueObj instanceof Number) {
-                        goal.setTargetValue(((Number) targetValueObj).intValue());
-                    }
-                    // If it's any other type, just ignore it
-                } catch (Exception e) {
-                    logger.debug("Error processing targetValue: {}, ignoring", e.getMessage());
-                    // Ignore invalid target values
-                }
+            String targetUnit = safeGetString(goalRequest, "targetUnit");
+            if (targetUnit != null && !targetUnit.isEmpty()) {
+                goal.setTargetUnit(targetUnit);
             }
             
-            String targetUnit = (String) goalRequest.get("targetUnit");
-            if (targetUnit != null && !targetUnit.trim().isEmpty()) {
-                goal.setTargetUnit(targetUnit.trim());
-            }
+            Boolean isPublic = safeGetBoolean(goalRequest, "isPublic");
+            goal.setPublic(isPublic != null ? isPublic : true); // default true
             
-            Object isPublicObj = goalRequest.get("isPublic");
-            if (isPublicObj != null) {
-                goal.setPublic(Boolean.parseBoolean(isPublicObj.toString()));
-            } else {
-                goal.setPublic(true); // default
-            }
-            
-            Object maxBuddiesObj = goalRequest.get("maxBuddies");
-            if (maxBuddiesObj != null) {
-                try {
-                    if (maxBuddiesObj instanceof String) {
-                        String maxBuddiesStr = (String) maxBuddiesObj;
-                        if (!maxBuddiesStr.trim().isEmpty()) {
-                            try {
-                                goal.setMaxBuddies(Integer.parseInt(maxBuddiesStr.trim()));
-                            } catch (NumberFormatException e) {
-                                logger.debug("Invalid maxBuddies format: {}, using default", maxBuddiesStr);
-                                goal.setMaxBuddies(3); // default
-                            }
-                        } else {
-                            goal.setMaxBuddies(3); // default for empty string
-                        }
-                    } else if (maxBuddiesObj instanceof Number) {
-                        goal.setMaxBuddies(((Number) maxBuddiesObj).intValue());
-                    } else {
-                        goal.setMaxBuddies(3); // default for other types
-                    }
-                } catch (Exception e) {
-                    logger.debug("Error processing maxBuddies: {}, using default", e.getMessage());
-                    goal.setMaxBuddies(3); // default
-                }
-            } else {
-                goal.setMaxBuddies(3); // default
-            }
+            Integer maxBuddies = safeGetInteger(goalRequest, "maxBuddies");
+            goal.setMaxBuddies(maxBuddies != null ? Math.max(1, Math.min(10, maxBuddies)) : 3); // default 3, range 1-10
             
             // Initialize progress
             goal.setCurrentProgress(0);
@@ -343,7 +295,7 @@ public class GoalController {
             }
             
             // Update fields if provided
-            String title = (String) goalRequest.get("title");
+            String title = safeGetString(goalRequest, "title");
             if (title != null) {
                 if (title.trim().isEmpty()) {
                     return ResponseEntity.badRequest()
@@ -356,7 +308,7 @@ public class GoalController {
                 goal.setTitle(title.trim());
             }
             
-            String description = (String) goalRequest.get("description");
+            String description = safeGetString(goalRequest, "description");
             if (description != null) {
                 if (description.length() > 1000) {
                     return ResponseEntity.badRequest()
@@ -366,7 +318,7 @@ public class GoalController {
             }
             
             // Update category if provided
-            String categoryStr = (String) goalRequest.get("category");
+            String categoryStr = safeGetString(goalRequest, "category");
             if (categoryStr != null) {
                 try {
                     goal.setCategory(Goal.GoalCategory.valueOf(categoryStr.toUpperCase()));
@@ -377,7 +329,7 @@ public class GoalController {
             }
             
             // Update difficulty if provided
-            String difficultyStr = (String) goalRequest.get("difficulty");
+            String difficultyStr = safeGetString(goalRequest, "difficulty");
             if (difficultyStr != null) {
                 try {
                     goal.setDifficulty(Goal.DifficultyLevel.valueOf(difficultyStr.toUpperCase()));
@@ -412,22 +364,14 @@ public class GoalController {
             }
             
             // Update other fields
-            Object isPublicObj = goalRequest.get("isPublic");
-            if (isPublicObj != null) {
-                goal.setPublic(Boolean.parseBoolean(isPublicObj.toString()));
+            Boolean isPublic = safeGetBoolean(goalRequest, "isPublic");
+            if (isPublic != null) {
+                goal.setPublic(isPublic);
             }
             
-            Object maxBuddiesObj = goalRequest.get("maxBuddies");
-            if (maxBuddiesObj != null) {
-                try {
-                    if (maxBuddiesObj instanceof String) {
-                        goal.setMaxBuddies(Integer.parseInt((String) maxBuddiesObj));
-                    } else if (maxBuddiesObj instanceof Number) {
-                        goal.setMaxBuddies(((Number) maxBuddiesObj).intValue());
-                    }
-                } catch (NumberFormatException e) {
-                    // Ignore invalid max buddies
-                }
+            Integer maxBuddies = safeGetInteger(goalRequest, "maxBuddies");
+            if (maxBuddies != null) {
+                goal.setMaxBuddies(maxBuddies);
             }
             
             Goal savedGoal = goalRepository.save(goal);
@@ -613,5 +557,60 @@ public class GoalController {
         response.put("isOverdue", goal.isOverdue());
         
         return response;
+    }
+
+    // Helper methods for safe type conversion
+    private String safeGetString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof String) {
+            return ((String) value).trim();
+        }
+        return null;
+    }
+    
+    private Integer safeGetInteger(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        if (value instanceof String) {
+            String strValue = ((String) value).trim();
+            if (!strValue.isEmpty()) {
+                try {
+                    return Integer.parseInt(strValue);
+                } catch (NumberFormatException e) {
+                    logger.debug("Invalid integer format for {}: {}", key, strValue);
+                    return null;
+                }
+            }
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return null;
+    }
+    
+    private Boolean safeGetBoolean(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return null;
+    }
+    
+    private LocalDate safeGetDate(Map<String, Object> map, String key) {
+        String dateStr = safeGetString(map, key);
+        if (dateStr != null && !dateStr.isEmpty()) {
+            try {
+                return LocalDate.parse(dateStr);
+            } catch (Exception e) {
+                logger.debug("Invalid date format for {}: {}", key, dateStr);
+                return null;
+            }
+        }
+        return null;
     }
 } 
