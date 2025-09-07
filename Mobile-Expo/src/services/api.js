@@ -9,14 +9,17 @@ const getBaseUrl = () => {
     // Get the IP address from Expo development server
     const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
     
+    // Use your specific IP address for reliable connection
+    const PC_IP = '192.168.1.46'; // Your actual PC IP from ipconfig
+    
     if (Platform.OS === 'android') {
       // For Android emulator, use 10.0.2.2 (maps to localhost)
-      // For real Android device, use the debugger host IP
-      const ip = debuggerHost || '10.0.2.2';
+      // For real Android device, use PC IP
+      const ip = debuggerHost || PC_IP;
       return `http://${ip}:8080/api`;
     } else {
-      // For iOS, use the debugger host IP or localhost
-      const ip = debuggerHost || 'localhost';
+      // For iOS, use the debugger host IP or your PC IP
+      const ip = debuggerHost || PC_IP;
       return `http://${ip}:8080/api`;
     }
   } else {
@@ -27,12 +30,15 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 
-// Create axios instance
+// Create axios instance with better configuration
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 15000, // Increased timeout for mobile networks
   headers: {
     'Content-Type': 'application/json',
+  },
+  validateStatus: function (status) {
+    return status < 500; // Don't throw for 4xx errors, handle them gracefully
   },
 });
 
@@ -50,23 +56,55 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    return Promise.reject({
+      message: 'Request setup failed',
+      originalError: error
+    });
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for better error handling
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // Handle successful responses
+    if (response.status >= 200 && response.status < 300) {
+      return response.data;
+    }
+    // Handle 4xx errors gracefully
+    throw {
+      message: response.data?.error || response.data?.message || 'Request failed',
+      status: response.status,
+      data: response.data
+    };
+  },
   async (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized - logout user
       await AsyncStorage.removeItem('authToken');
+      throw {
+        message: 'Session expired. Please login again.',
+        status: 401,
+        requiresLogin: true
+      };
     }
-    return Promise.reject(error.response?.data || { message: error.message });
+    
+    // Network or other errors
+    if (!error.response) {
+      throw {
+        message: 'Network error. Please check your connection and try again.',
+        isNetworkError: true
+      };
+    }
+    
+    throw {
+      message: error.response?.data?.error || error.response?.data?.message || 'An error occurred',
+      status: error.response?.status,
+      data: error.response?.data
+    };
   }
 );
 
-// Authentication API
+// Authentication API with better error handling
 export const authAPI = {
   login: async (credentials) => {
     try {
@@ -106,7 +144,7 @@ export const authAPI = {
   },
 };
 
-// Goals API
+// Goals API with error handling
 export const goalsAPI = {
   getGoals: async () => {
     try {

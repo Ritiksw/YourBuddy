@@ -32,40 +32,67 @@ public class GoalController {
     private BuddyMatchingService buddyMatchingService;
     
     @PostMapping
-    public ResponseEntity<?> createGoal(@Valid @RequestBody Map<String, Object> goalData,
-                                       Authentication authentication) {
+    public ResponseEntity<?> createGoal(@Valid @RequestBody Map<String, Object> goalRequest,
+                                      Authentication authentication) {
         try {
+            // Input validation
+            String title = (String) goalRequest.get("title");
+            if (title == null || title.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Goal title is required"));
+            }
+            if (title.length() > 200) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Goal title must be less than 200 characters"));
+            }
+            
+            String description = (String) goalRequest.get("description");
+            if (description != null && description.length() > 1000) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Goal description must be less than 1000 characters"));
+            }
+            
+            String categoryStr = (String) goalRequest.get("category");
+            if (categoryStr == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Goal category is required"));
+            }
+            
+            String startDateStr = (String) goalRequest.get("startDate");
+            String targetDateStr = (String) goalRequest.get("targetDate");
+            
+            if (startDateStr == null || targetDateStr == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Start date and target date are required"));
+            }
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             Goal goal = new Goal();
-            goal.setTitle((String) goalData.get("title"));
-            goal.setDescription((String) goalData.get("description"));
-            goal.setCategory(Goal.GoalCategory.valueOf((String) goalData.get("category")));
-            goal.setType(Goal.GoalType.valueOf((String) goalData.get("type")));
-            goal.setDifficulty(Goal.DifficultyLevel.valueOf(
-                (String) goalData.getOrDefault("difficulty", "MEDIUM")));
             goal.setUser(user);
-            goal.setStartDate(LocalDate.parse((String) goalData.get("startDate")));
-            goal.setTargetDate(LocalDate.parse((String) goalData.get("targetDate")));
+            goal.setTitle(title.trim());
+            goal.setDescription(description != null ? description.trim() : null);
             
-            // Optional fields
-            if (goalData.get("targetValue") != null) {
-                goal.setTargetValue((Integer) goalData.get("targetValue"));
+            try {
+                goal.setCategory(Goal.Category.valueOf(categoryStr.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Invalid category. Valid categories: FITNESS, EDUCATION, HOBBY, CAREER, HEALTH, SOCIAL, CREATIVE, SPIRITUAL, OTHER"));
             }
-            if (goalData.get("targetUnit") != null) {
-                goal.setTargetUnit((String) goalData.get("targetUnit"));
-            }
-            if (goalData.get("location") != null) {
-                goal.setLocation((String) goalData.get("location"));
-                goal.setRequiresLocation(true);
-            }
-            if (goalData.get("maxBuddies") != null) {
-                goal.setMaxBuddies((Integer) goalData.get("maxBuddies"));
-            }
-            if (goalData.get("tags") != null) {
-                goal.setTags((List<String>) goalData.get("tags"));
+            
+            try {
+                goal.setStartDate(LocalDate.parse(startDateStr));
+                goal.setTargetDate(LocalDate.parse(targetDateStr));
+                
+                if (goal.getTargetDate().isBefore(goal.getStartDate())) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Target date must be after start date"));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Invalid date format. Use YYYY-MM-DD"));
             }
             
             Goal savedGoal = goalRepository.save(goal);
@@ -77,14 +104,19 @@ public class GoalController {
             ));
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Failed to create goal: " + e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Goal creation service temporarily unavailable"));
         }
     }
     
     @GetMapping
     public ResponseEntity<?> getUserGoals(Authentication authentication) {
         try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -97,92 +129,130 @@ public class GoalController {
             ));
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Failed to get goals: " + e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unable to retrieve goals"));
         }
     }
     
     @GetMapping("/{goalId}")
     public ResponseEntity<?> getGoal(@PathVariable Long goalId, Authentication authentication) {
         try {
-            Goal goal = goalRepository.findById(goalId)
-                    .orElseThrow(() -> new RuntimeException("Goal not found"));
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Authentication required"));
+            }
             
-            // Add progress calculation
-            Map<String, Object> goalData = new HashMap<>();
-            goalData.put("goal", goal);
-            goalData.put("progressPercentage", goal.getProgressPercentage());
-            goalData.put("daysRemaining", goal.getDaysRemaining());
-            goalData.put("totalDays", goal.getTotalDays());
-            goalData.put("isOverdue", goal.isOverdue());
-            
-            return ResponseEntity.ok(goalData);
-            
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Failed to get goal: " + e.getMessage()));
-        }
-    }
-    
-    @PutMapping("/{goalId}")
-    public ResponseEntity<?> updateGoal(@PathVariable Long goalId,
-                                       @RequestBody Map<String, Object> updates,
-                                       Authentication authentication) {
-        try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             Goal goal = goalRepository.findById(goalId)
-                    .orElseThrow(() -> new RuntimeException("Goal not found"));
+                    .orElse(null);
+            
+            if (goal == null) {
+                return ResponseEntity.notFound().build();
+            }
             
             // Check if user owns this goal
             if (!goal.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "You can only update your own goals"));
+                        .body(Map.of("error", "You don't have permission to access this goal"));
             }
             
-            // Update allowed fields
-            if (updates.get("title") != null) {
-                goal.setTitle((String) updates.get("title"));
-            }
-            if (updates.get("description") != null) {
-                goal.setDescription((String) updates.get("description"));
-            }
-            if (updates.get("status") != null) {
-                goal.setStatus(Goal.GoalStatus.valueOf((String) updates.get("status")));
-            }
-            if (updates.get("currentProgress") != null) {
-                goal.setCurrentProgress((Integer) updates.get("currentProgress"));
+            return ResponseEntity.ok(goal);
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unable to retrieve goal"));
+        }
+    }
+    
+    @PutMapping("/{goalId}")
+    public ResponseEntity<?> updateGoal(@PathVariable Long goalId,
+                                      @Valid @RequestBody Map<String, Object> goalRequest,
+                                      Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Authentication required"));
             }
             
-            Goal updatedGoal = goalRepository.save(goal);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            Goal goal = goalRepository.findById(goalId)
+                    .orElse(null);
+            
+            if (goal == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Check if user owns this goal
+            if (!goal.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "You don't have permission to update this goal"));
+            }
+            
+            // Update fields if provided
+            String title = (String) goalRequest.get("title");
+            if (title != null) {
+                if (title.trim().isEmpty()) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Goal title cannot be empty"));
+                }
+                if (title.length() > 200) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Goal title must be less than 200 characters"));
+                }
+                goal.setTitle(title.trim());
+            }
+            
+            String description = (String) goalRequest.get("description");
+            if (description != null) {
+                if (description.length() > 1000) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Goal description must be less than 1000 characters"));
+                }
+                goal.setDescription(description.trim());
+            }
+            
+            Goal savedGoal = goalRepository.save(goal);
             
             return ResponseEntity.ok(Map.of(
                     "message", "Goal updated successfully!",
-                    "goal", updatedGoal
+                    "goal", savedGoal
             ));
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Failed to update goal: " + e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Goal update service temporarily unavailable"));
         }
     }
     
     @DeleteMapping("/{goalId}")
     public ResponseEntity<?> deleteGoal(@PathVariable Long goalId, Authentication authentication) {
         try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             Goal goal = goalRepository.findById(goalId)
-                    .orElseThrow(() -> new RuntimeException("Goal not found"));
+                    .orElse(null);
+            
+            if (goal == null) {
+                return ResponseEntity.notFound().build();
+            }
             
             // Check if user owns this goal
             if (!goal.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "You can only delete your own goals"));
+                        .body(Map.of("error", "You don't have permission to delete this goal"));
             }
             
             goalRepository.delete(goal);
@@ -190,8 +260,8 @@ public class GoalController {
             return ResponseEntity.ok(Map.of("message", "Goal deleted successfully!"));
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Failed to delete goal: " + e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Goal deletion service temporarily unavailable"));
         }
     }
     
