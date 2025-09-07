@@ -1,8 +1,31 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// Docker backend URL - works with Expo
-const BASE_URL = 'http://localhost:8080/api';
+// Docker backend URL - automatically detects your PC IP
+const getBaseUrl = () => {
+  if (__DEV__) {
+    // Get the IP address from Expo development server
+    const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+    
+    if (Platform.OS === 'android') {
+      // For Android emulator, use 10.0.2.2 (maps to localhost)
+      // For real Android device, use the debugger host IP
+      const ip = debuggerHost || '10.0.2.2';
+      return `http://${ip}:8080/api`;
+    } else {
+      // For iOS, use the debugger host IP or localhost
+      const ip = debuggerHost || 'localhost';
+      return `http://${ip}:8080/api`;
+    }
+  } else {
+    // For production, use your production API URL
+    return 'http://your-production-api.com/api';
+  }
+};
+
+const BASE_URL = getBaseUrl();
 
 // Create axios instance
 const apiClient = axios.create({
