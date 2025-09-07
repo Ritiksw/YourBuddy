@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { createGoal } from '../store/goalsSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateGoalScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -81,6 +82,12 @@ const CreateGoalScreen = ({ navigation }) => {
     }
 
     try {
+      // Debug: Check if we have a valid token
+      const token = await AsyncStorage.getItem('authToken');
+      console.log('🔍 Auth Debug - Token exists:', !!token);
+      console.log('🔍 Auth Debug - Token length:', token?.length || 0);
+      console.log('🔍 Auth Debug - Goal data:', goalData);
+      
       await dispatch(createGoal(goalData)).unwrap();
       Alert.alert(
         'Success!',
@@ -88,7 +95,8 @@ const CreateGoalScreen = ({ navigation }) => {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert('Error', error || 'Failed to create goal');
+      console.error('🔍 Goal creation error:', error);
+      Alert.alert('Error', error.message || 'Failed to create goal');
     }
   };
 

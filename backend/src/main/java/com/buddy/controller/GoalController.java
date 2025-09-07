@@ -6,6 +6,8 @@ import com.buddy.repository.GoalRepository;
 import com.buddy.repository.UserRepository;
 import com.buddy.service.BuddyMatchingService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,8 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class GoalController {
     
+    private static final Logger logger = LoggerFactory.getLogger(GoalController.class);
+    
     @Autowired
     private GoalRepository goalRepository;
     
@@ -36,6 +40,29 @@ public class GoalController {
     public ResponseEntity<?> createGoal(@Valid @RequestBody Map<String, Object> goalRequest,
                                       Authentication authentication) {
         try {
+            // Check authentication first
+            logger.debug("Creating goal - Authentication check: {}", authentication != null ? "present" : "null");
+            if (authentication != null) {
+                logger.debug("Authentication details - Name: {}, Authenticated: {}, Principal type: {}", 
+                    authentication.getName(), 
+                    authentication.isAuthenticated(),
+                    authentication.getPrincipal().getClass().getSimpleName());
+            }
+            
+            if (authentication == null || !authentication.isAuthenticated()) {
+                logger.warn("Goal creation failed - Authentication missing or invalid");
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "Authentication required to create goals"));
+            }
+            
+            // Validate authentication principal
+            if (!(authentication.getPrincipal() instanceof UserDetails)) {
+                logger.warn("Goal creation failed - Invalid principal type: {}", 
+                    authentication.getPrincipal().getClass().getSimpleName());
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "Invalid authentication token"));
+            }
+            
             // Input validation
             String title = (String) goalRequest.get("title");
             if (title == null || title.trim().isEmpty()) {

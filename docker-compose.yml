@@ -13,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./setup-database.sql:/setup-database.sql
     networks:
       - buddy-network
 
@@ -23,10 +24,20 @@ services:
       dockerfile: Dockerfile
     container_name: buddy_backend
     environment:
+      # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/buddy_db
       SPRING_DATASOURCE_USERNAME: buddy_user
       SPRING_DATASOURCE_PASSWORD: buddy_password
+      
+      # JWT Configuration (CRITICAL for authentication)
       JWT_SECRET: myVerySecretJWTKeyForBuddyApp2025
+      
+      # Firebase Configuration (Optional)
+      FIREBASE_ENABLED: false
+      
+      # Logging
+      LOGGING_LEVEL_COM_BUDDY: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
     ports:
       - "8080:8080"
     depends_on:
