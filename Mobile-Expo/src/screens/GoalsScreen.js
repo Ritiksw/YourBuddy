@@ -26,20 +26,95 @@ const GoalsScreen = ({ navigation }) => {
     setRefreshing(false);
   };
 
+  const handleCreateGoal = () => {
+    navigation.navigate('CreateGoal');
+  };
+
+  const handleGoalPress = (goal) => {
+    navigation.navigate('GoalDetails', { goalId: goal.id });
+  };
+
+  const getCategoryEmoji = (category) => {
+    const emojiMap = {
+      FITNESS: '💪',
+      EDUCATION: '📚',
+      HOBBY: '🎨',
+      CAREER: '💼',
+      HEALTH: '🏥',
+      SOCIAL: '👫',
+      CREATIVE: '🎭',
+      SPIRITUAL: '🧘',
+      OTHER: '📝',
+    };
+    return emojiMap[category] || '📝';
+  };
+
+  const getStatusColor = (status) => {
+    const colorMap = {
+      ACTIVE: '#4CAF50',
+      COMPLETED: '#2196F3',
+      PAUSED: '#FF9800',
+      CANCELLED: '#F44336',
+    };
+    return colorMap[status] || '#666666';
+  };
+
   const renderGoal = ({ item }) => (
-    <View style={styles.goalCard}>
-      <Text style={styles.goalTitle}>{item.title}</Text>
-      <Text style={styles.goalDescription}>{item.description}</Text>
-      <View style={styles.goalMeta}>
-        <Text style={styles.goalCategory}>📂 {item.category}</Text>
-        <Text style={styles.goalStatus}>🎯 {item.status}</Text>
-      </View>
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>
-          Progress: {item.currentProgress || 0}%
+    <TouchableOpacity 
+      style={styles.goalCard}
+      onPress={() => handleGoalPress(item)}
+      activeOpacity={0.7}>
+      
+      <View style={styles.goalHeader}>
+        <Text style={styles.goalTitle}>{item.title}</Text>
+        <Text style={[
+          styles.goalStatus,
+          { color: getStatusColor(item.status) }
+        ]}>
+          {item.status}
         </Text>
       </View>
-    </View>
+      
+      {item.description && (
+        <Text style={styles.goalDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
+      )}
+      
+      <View style={styles.goalMeta}>
+        <Text style={styles.goalCategory}>
+          {getCategoryEmoji(item.category)} {item.category}
+        </Text>
+        <Text style={styles.goalDifficulty}>
+          ⚡ {item.difficulty || 'MEDIUM'}
+        </Text>
+      </View>
+      
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View style={[
+            styles.progressFill,
+            { width: `${item.currentProgress || 0}%` }
+          ]} />
+        </View>
+        <Text style={styles.progressText}>
+          {item.currentProgress || 0}% Complete
+        </Text>
+      </View>
+
+      {/* Goal Timeline */}
+      <View style={styles.timelineContainer}>
+        <Text style={styles.timelineText}>
+          📅 {item.startDate} → {item.targetDate}
+        </Text>
+        {item.daysRemaining && (
+          <Text style={styles.daysRemaining}>
+            {item.daysRemaining} days left
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -48,7 +123,7 @@ const GoalsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>My Goals</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => Alert.alert('Coming Soon', 'Goal creation feature')}>
+          onPress={handleCreateGoal}>
           <Text style={styles.addButtonText}>+ Add Goal</Text>
         </TouchableOpacity>
       </View>
@@ -60,6 +135,11 @@ const GoalsScreen = ({ navigation }) => {
           <Text style={styles.emptySubtext}>
             Create your first goal to find accountability buddies
           </Text>
+          <TouchableOpacity
+            style={styles.createFirstGoalButton}
+            onPress={handleCreateGoal}>
+            <Text style={styles.createFirstGoalText}>🎯 Create Your First Goal</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -77,6 +157,9 @@ const GoalsScreen = ({ navigation }) => {
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
           🔗 Backend: localhost:8080/api/goals
+        </Text>
+        <Text style={styles.statusText}>
+          Total Goals: {goals?.length || 0}
         </Text>
       </View>
     </View>
@@ -133,11 +216,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   goalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333333',
-    marginBottom: 8,
+    flex: 1,
+    marginRight: 10,
+  },
+  goalStatus: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
   },
   goalDescription: {
     fontSize: 14,
@@ -154,20 +252,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888888',
   },
-  goalStatus: {
+  goalDifficulty: {
     fontSize: 12,
     color: '#888888',
   },
   progressContainer: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 3,
+    marginBottom: 5,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#6200EE',
+    borderRadius: 3,
   },
   progressText: {
     fontSize: 12,
-    textAlign: 'center',
     color: '#6200EE',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  timelineContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timelineText: {
+    fontSize: 12,
+    color: '#888888',
+  },
+  daysRemaining: {
+    fontSize: 12,
+    color: '#FF9800',
     fontWeight: 'bold',
   },
   emptyContainer: {
@@ -192,6 +312,18 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 30,
+  },
+  createFirstGoalButton: {
+    backgroundColor: '#6200EE',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  createFirstGoalText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   statusContainer: {
     alignItems: 'center',
@@ -203,6 +335,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     color: '#888888',
+    marginBottom: 2,
   },
 });
 

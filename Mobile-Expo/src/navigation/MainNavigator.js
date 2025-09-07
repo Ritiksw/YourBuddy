@@ -1,14 +1,56 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Text } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import GoalsScreen from '../screens/GoalsScreen';
+import CreateGoalScreen from '../screens/CreateGoalScreen';
+import GoalDetailsScreen from '../screens/GoalDetailsScreen';
 import BuddiesScreen from '../screens/BuddiesScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+// Goals Stack Navigator
+const GoalsStackNavigator = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#6200EE',
+        },
+        headerTintColor: '#ffffff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}>
+      <Stack.Screen
+        name="GoalsList"
+        component={GoalsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateGoal"
+        component={CreateGoalScreen}
+        options={{ 
+          title: 'Create Goal',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="GoalDetails"
+        component={GoalDetailsScreen}
+        options={{ 
+          title: 'Goal Details',
+          headerBackTitle: 'Back',
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const MainNavigator = () => {
   return (
@@ -80,10 +122,11 @@ const MainNavigator = () => {
       />
       <Tab.Screen 
         name="Goals" 
-        component={GoalsScreen}
+        component={GoalsStackNavigator}
         options={{ 
           title: 'My Goals',
           tabBarLabel: 'Goals',
+          headerShown: false,
         }}
       />
       <Tab.Screen 
