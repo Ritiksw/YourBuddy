@@ -60,12 +60,36 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    console.log('API Error:', error.response?.status, error.message);
+    console.log('API Error Details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      url: error.config?.url
+    });
+    
     if (error.response?.status === 401) {
       // Handle unauthorized - logout user
       await AsyncStorage.removeItem('authToken');
     }
-    return Promise.reject(error.response?.data || { message: error.message });
+    
+    // Handle different error response formats
+    let errorMessage = 'Network error';
+    
+    if (error.response?.data) {
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else {
+        errorMessage = JSON.stringify(error.response.data);
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    return Promise.reject({ message: errorMessage });
   }
 );
 
@@ -117,32 +141,44 @@ export const authAPI = {
 export const goalsAPI = {
   getGoals: async () => {
     try {
+      console.log('Fetching goals from:', BASE_URL + '/goals');
       return await apiClient.get('/goals');
     } catch (error) {
+      console.error('Get goals error:', error);
       throw error;
     }
   },
 
   createGoal: async (goalData) => {
     try {
-      return await apiClient.post('/goals', goalData);
+      console.log('Creating goal with data:', goalData);
+      console.log('API endpoint:', BASE_URL + '/goals');
+      
+      const response = await apiClient.post('/goals', goalData);
+      console.log('Goal created successfully:', response);
+      return response;
     } catch (error) {
+      console.error('Create goal error:', error);
       throw error;
     }
   },
 
   updateGoal: async (goalId, goalData) => {
     try {
+      console.log('Updating goal:', goalId, goalData);
       return await apiClient.put(`/goals/${goalId}`, goalData);
     } catch (error) {
+      console.error('Update goal error:', error);
       throw error;
     }
   },
 
   deleteGoal: async (goalId) => {
     try {
+      console.log('Deleting goal:', goalId);
       return await apiClient.delete(`/goals/${goalId}`);
     } catch (error) {
+      console.error('Delete goal error:', error);
       throw error;
     }
   },
