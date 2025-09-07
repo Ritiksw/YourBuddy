@@ -121,11 +121,6 @@ const GoalsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Goals</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleCreateGoal}>
-          <Text style={styles.addButtonText}>+ Add Goal</Text>
-        </TouchableOpacity>
       </View>
 
       {(!goals || goals.length === 0) ? (
@@ -153,6 +148,14 @@ const GoalsScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Floating Add Goal Button */}
+      <TouchableOpacity
+        style={styles.floatingAddButton}
+        onPress={handleCreateGoal}>
+        <Text style={styles.floatingAddIcon}>+</Text>
+        <Text style={styles.floatingAddText}>Add Goal</Text>
+      </TouchableOpacity>
 
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
@@ -324,6 +327,32 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  floatingAddButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    backgroundColor: '#6200EE',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  floatingAddIcon: {
+    fontSize: 24,
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  floatingAddText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   statusContainer: {
     alignItems: 'center',
